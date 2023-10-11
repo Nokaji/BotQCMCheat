@@ -86,4 +86,3 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	timer = setTimer(1000);
 	
 });
-
