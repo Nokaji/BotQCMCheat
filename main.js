@@ -33,9 +33,9 @@ axios.get(url)
     });
 
 const request = require('request');
-const username = 'your_username';
-const password = 'your_password';
-const url = 'https://example.com/protected-page';
+const username = 'snt';
+const password = 'snt';
+const url_auth = 'https://example.com/protected-page';
 
 const auth = 'Basic ' + Buffer.from(username + ':' + password).toString('base64');
 
