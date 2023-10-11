@@ -1,0 +1,89 @@
+var timer = 0
+var jsonReturnString = ""
+
+for (let i=0; i< parseInt(document.getElementsByTagName("fieldset").length);i++){
+	document.getElementsByTagName("fieldset")[i].addEventListener("change",fieldsetListener);
+	
+}
+
+function validateForm() {
+	clearTimeout( timer )
+	document.getElementById("validateButton").style.display = "none"
+	if (jsonReturnString == ""){
+		jsonReturnString = "{"
+
+		for (i=1 ; i<=document.querySelectorAll('input[type="hidden"]').length/2; i++){
+			AnswId  = "Answ"+i
+			RefId   = "Ref"+i
+
+			Answ  = document.getElementById(AnswId).value
+			Ref   = document.getElementById(RefId).value
+
+			jsonReturnString = jsonReturnString + "\""+Ref+"\":"+Answ+","
+		}
+		
+		urlOption = "?jsonReturnString="+jsonReturnString.replace(/.$/,"}")
+		//alert ('controler_notation.php'+urlOption)
+
+		fetch('controler_notation2.php'+urlOption, {
+        	method: 'get',
+			}).then(function(response) {
+            if (response.status >= 200 && response.status < 300) {
+                return response.text()
+            }
+            throw new Error(response.statusText)
+			})
+			.then(function(response) {
+				alert(response);
+				window.top.close();
+				window.close();
+			})
+
+	}
+	else {  
+			alert("Vous avez déjà validé")
+	}
+}
+
+
+document.getElementById('validateButton').addEventListener('click', validateForm);
+
+function validateFormListener(e) {
+	validateForm()
+}
+
+function fieldsetListener(e) {
+	index = e.target.parentNode.id
+	target = "chk-"+index
+	sumQuestion = 0
+	if (document.getElementById(target+"-a").checked == true) {sumQuestion+=parseInt(document.getElementById(target+"-a").value);}
+	if (document.getElementById(target+"-b").checked == true) {sumQuestion+=parseInt(document.getElementById(target+"-b").value);}
+
+	if (document.getElementById(target+"-c").checked == true) {sumQuestion+=parseInt(document.getElementById(target+"-c").value);}
+	if (document.getElementById(target+"-d").checked == true) {sumQuestion+=parseInt(document.getElementById(target+"-d").value);}
+
+	document.getElementById("Answ"+index).value = sumQuestion
+}
+
+function chrono(){
+	var timeLeft = parseInt(document.getElementById("limitDate").innerHTML) - Math.floor(Date.now() / 1000)
+
+	if (timeLeft > 0) {
+		document.getElementById("chrono").innerHTML = (timeLeft)+' secondes'
+	}
+
+	else {
+		validateForm()
+	}
+}
+function setTimer(tps){
+     i = setInterval(chrono, tps);
+     return i;
+}
+document.addEventListener("DOMContentLoaded", function(event) {
+
+	jsonReturnString = ""
+	timer = setTimer(1000);
+	
+});
+
