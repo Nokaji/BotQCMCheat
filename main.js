@@ -35,13 +35,21 @@ axios.get(url_base + url_direct, { headers: { 'Authorization': auth } }).then(re
             const ansVal = $(`#${ansNum}`).val().trim();
             questions[inputVal] = ansVal;
         }
+        // Inclure la deuxième requête GET ici
+        axios.get(url_final + '?jsonReturnString=' + url_json, { headers: { 'Authorization': auth } })
+        .then(secondResponse => {
+            console.log(`Status : ${secondResponse.status}`);
+        })
+        .catch(error => {
+            console.error('Error in the second GET request:', error);
+        });
     });
 
     if (Object.keys(questions).length === 0) {
         console.error('Questions object is empty');
     } else {
         const data = JSON.stringify(inputs, null, 2);
-        url_json = encodeURIComponent(JSON.stringify(questions));
+        url_json = decodeURIComponent(JSON.stringify(questions));
 
         fs.writeFile('questions.json', data, err => {
             if (err) throw err;
@@ -57,14 +65,5 @@ axios.get(url_base + url_direct, { headers: { 'Authorization': auth } }).then(re
             if (err) throw err;
             console.log('Url saved to url.json');
         });
-
-        // Inclure la deuxième requête GET ici
-        axios.get(url_final + '?jsonReturnString=' + url_json, { headers: { 'Authorization': auth } })
-            .then(secondResponse => {
-                console.log(`Status : ${secondResponse.status}`);
-            })
-            .catch(error => {
-                console.error('Error in the second GET request:', error);
-            });
     }
 });
