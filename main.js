@@ -35,14 +35,6 @@ axios.get(url_base + url_direct, { headers: { 'Authorization': auth } }).then(re
             const ansVal = $(`#${ansNum}`).val().trim();
             questions[inputVal] = ansVal;
         }
-        // Inclure la deuxième requête GET ici
-        axios.get(url_final + '?jsonReturnString=' + url_json, { headers: { 'Authorization': auth } })
-        .then(secondResponse => {
-            console.log(`Status : ${secondResponse.status}`);
-        })
-        .catch(error => {
-            console.error('Error in the second GET request:', error);
-        });
     });
 
     if (Object.keys(questions).length === 0) {
@@ -66,4 +58,15 @@ axios.get(url_base + url_direct, { headers: { 'Authorization': auth } }).then(re
             console.log('Url saved to url.json');
         });
     }
+    // Inclure la deuxième requête GET ici
+    axios.get(url_final + '?jsonReturnString=' + url_json, { headers: { 'Authorization': auth } })
+    .then(secondResponse => {
+        console.log(`Status : ${secondResponse.status}`);
+        if(secondResponse.status >= 200 && secondResponse.status < 300){
+            console.log(`Resultat ${Object.values(secondResponse)}`);
+        }
+    })
+    .catch(error => {
+        console.error('Error in the second GET request:', error);
+    });
 });
