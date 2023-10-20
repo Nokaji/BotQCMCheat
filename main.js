@@ -12,23 +12,6 @@ const auth = 'Basic ' + Buffer.from(username + ':' + password).toString('base64'
 let temp_val, temp_num, url_final, pre_url_json, url_json, note = 0;
 const questions = {};
 
-function extractElements(liste) {
-    const resultats = [];
-
-    for (const element of liste) {
-        const id = element.id.match(/\d+/)[0];
-
-        if (element.id.startsWith("Ref") || element.id.startsWith("Answ")) {
-            resultats.push({
-                id: element.id,
-                value: element.value
-            });
-        }
-    }
-
-    return resultats;
-}
-
 axios.get(url_base + url_direct, { headers: { 'Authorization': auth } }).then(response => {
     const html = response.data;
     const $ = cheerio.load(html);
@@ -57,9 +40,8 @@ axios.get(url_base + url_direct, { headers: { 'Authorization': auth } }).then(re
     if (Object.keys(questions).length === 0) {
         console.error('Questions object is empty');
     } else {
-        const referenceQuestions = extractElements(inputs);
         url_json = decodeURIComponent(JSON.stringify(questions));
-        const data = JSON.stringify(referenceQuestions, null, 2);
+        const data = JSON.stringify(inputs, null, 2);
 
         fs.writeFile('questions.json', data, err => {
             if (err) throw err;
@@ -76,28 +58,34 @@ axios.get(url_base + url_direct, { headers: { 'Authorization': auth } }).then(re
             console.log('Url saved to url.json');
         });
     }
-    function doRequest() {
-        axios.get(url_final + '?jsonReturnString=' + url_json, { headers: { 'Authorization': auth } })
-            .then(secondResponse => {
-                console.log(`Status : ${secondResponse.status}`);
-                if (secondResponse.status >= 200 && secondResponse.status < 300) {
-                    const noteMatch = secondResponse.data.match(/(\d+)\s*\/\s*20/);
-                    if (noteMatch) {
-                        const resultat = noteMatch[1];
-                        console.log(`Résultat : ${resultat}`);
-    
-                        if (resultat < 18 || resultat != 20) {
-                            // Si la note ne satisfait pas la condition, réessaie après 5 secondes
-                            setTimeout(doRequest, 2500);
-                        }
+
+    function doRequest(){
+        axios.get(url_final, { params: { jsonReturnString: url_json }, headers: { 'Authorization': auth } })
+        .then(secondResponse => {
+            console.log(`Status : ${secondResponse.status}`);
+            if (secondResponse.status >= 200 && secondResponse.status < 300) {
+                const noteMatch = secondResponse.data.match(/(\d+)\s*\/\s*20/);
+                if (noteMatch) {
+                    const resultat = parseInt(noteMatch[1]);
+                    console.log(`url_json : ${url_json}`);
+                    console.log(`Résultat : ${resultat}`);
+
+                    if (resultat > lastResultat) {
+                        lastResultat = resultat;
+                        // Répéter la requête après 2500 ms
+                        setTimeout(makeRequest, 2500);
+                    } else {
+                        // La note n'a pas augmenté, passer à la prochaine valeur
+                        currentIndex++;
+                        // Répéter la requête après 2500 ms
+                        setTimeout(makeRequest, 2500);
                     }
                 }
-            })
-            .catch(error => {
-                console.error('Erreur dans la deuxième requête GET :', error);
-            });
+            }
+        })
+        .catch(error => {
+            console.error('Erreur dans la deuxième requête GET :', error);
+        });
     }
-    
-    // Appelle la fonction pour la première fois
     doRequest();
 });
