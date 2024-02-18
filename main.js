@@ -3,7 +3,7 @@ const cheerio = require('cheerio');
 const fs = require('fs-extra');
 
 const url_base = 'https://oboulo.lfz.duckdns.org/qcm/';
-const url_direct = "qcm_eval.php?theme=62&filiere=2&nbQuestion=50";
+const url_direct = "qcm_eval.php?theme=60&filiere=2&nbQuestion=50";
 const username = 'snt';
 const password = 'snt';
 
