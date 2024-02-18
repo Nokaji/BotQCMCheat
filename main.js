@@ -3,89 +3,45 @@ const cheerio = require('cheerio');
 const fs = require('fs-extra');
 
 const url_base = 'https://oboulo.lfz.duckdns.org/qcm/';
-const url_direct = "qcm_evalv2.php?theme=60&filiere=2&nbQuestion=50";
-const username = '1g7.leandre.roger-geslin';
-const password = '1g7#16/12/2007';
+const url_direct = "qcm_eval.php?theme=62&filiere=2&nbQuestion=50";
+const username = 'snt';
+const password = 'snt';
 
 const auth = 'Basic ' + Buffer.from(username + ':' + password).toString('base64');
 
-let temp_val, temp_num, url_final, pre_url_json, url_json, note = 0;
+let url_final, url_json;
 const questions = {};
 
 axios.get(url_base + url_direct, { headers: { 'Authorization': auth } }).then(response => {
     const html = response.data;
     const $ = cheerio.load(html);
-    const inputs = [];
 
-    url_final = url_base + "controler_notation2.php";
+    $('.ui-corner-all.custom-corners').each((i, el) => {
+        const questionDiv = $(el);
+        const questionNumber = questionDiv.find('.ui-bar.ui-bar-a h1').text().trim().split(')')[0];
+        const refInput = questionDiv.find('input[id^="Ref"]').attr('id');
+        const refValue = $('#' + refInput).val().trim();
+        const rInput = questionDiv.find('input[id^="R"]').attr('id');
+        const rValue = $('#' + rInput).val().trim();
 
-    $('input').each((i, el) => {
-        const inputElement = $(el);
-        const inputId = inputElement.attr('id');
-        const inputVal = inputElement.val().trim();
-
-        inputs.push({
-            id: inputId,
-            value: inputVal
-        });
-
-        if (inputId.includes('Ref')) {
-            const refNum = inputId.match(/\d+/)[0];
-            const ansNum = inputId.replace('Ref', 'Answ');
-            const ansVal = $(`#${ansNum}`).val().trim();
-            questions[inputVal] = ansVal;
-        }
+        questions[refValue] = rValue;
     });
 
     if (Object.keys(questions).length === 0) {
         console.error('Questions object is empty');
     } else {
-        url_json = decodeURIComponent(JSON.stringify(questions));
-        const data = JSON.stringify(inputs, null, 2);
+        url_json = JSON.stringify(questions);
 
-        fs.writeFile('questions.json', data, err => {
+        fs.writeFile('questions.json', url_json, err => {
             if (err) throw err;
             console.log('Questions saved to questions.json');
         });
 
-        fs.writeFile("url.txt", url_final + "?jsonReturnString=" + url_json, err => {
-            if (err) throw err;
-            console.log('Url saved to url.txt');
-        });
+        url_final = url_base + "controler_notation2.php?jsonReturnString=" + url_json;
 
-        fs.writeFile("url.json", url_json, err => {
+        fs.writeFile("url.txt", url_final, err => {
             if (err) throw err;
-            console.log('Url saved to url.json');
+            console.log('URL saved to url.txt');
         });
     }
-
-    function doRequest(){
-        axios.get(url_final, { params: { jsonReturnString: url_json }, headers: { 'Authorization': auth } })
-        .then(secondResponse => {
-            console.log(`Status : ${secondResponse.status}`);
-            if (secondResponse.status >= 200 && secondResponse.status < 300) {
-                const noteMatch = secondResponse.data.match(/(\d+)\s*\/\s*20/);
-                if (noteMatch) {
-                    const resultat = parseInt(noteMatch[1]);
-                    console.log(`url_json : ${url_json}`);
-                    console.log(`Résultat : ${resultat}`);
-
-                    if (resultat > lastResultat) {
-                        lastResultat = resultat;
-                        // Répéter la requête après 2500 ms
-                        setTimeout(makeRequest, 2500);
-                    } else {
-                        // La note n'a pas augmenté, passer à la prochaine valeur
-                        currentIndex++;
-                        // Répéter la requête après 2500 ms
-                        setTimeout(makeRequest, 2500);
-                    }
-                }
-            }
-        })
-        .catch(error => {
-            console.error('Erreur dans la deuxième requête GET :', error);
-        });
-    }
-    doRequest();
 });
